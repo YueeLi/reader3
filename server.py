@@ -18,6 +18,9 @@ from export_service import export_book, BookNotFoundError, ExportError
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
+# Mount books directory as static files for serving cover images
+app.mount("/books", StaticFiles(directory="books"), name="books")
+
 # Where are the book folders located?
 BOOKS_DIR = "books"
 
@@ -55,11 +58,23 @@ async def library_view(request: Request):
                 # Try to load it to get the title
                 book = load_book_cached(item)
                 if book:
+                    # Check for cover image
+                    cover_path = None
+                    images_dir = os.path.join(item_path, "images")
+                    if os.path.exists(images_dir):
+                        # Look for cover.jpeg or cover.jpg
+                        for cover_name in ["cover.jpeg", "cover.jpg", "cover.png"]:
+                            potential_cover = os.path.join(images_dir, cover_name)
+                            if os.path.exists(potential_cover):
+                                cover_path = f"/books/{item}/images/{cover_name}"
+                                break
+                    
                     books.append({
                         "id": item,
                         "title": book.metadata.title,
                         "author": ", ".join(book.metadata.authors),
-                        "chapters": len(book.spine)
+                        "chapters": len(book.spine),
+                        "cover_path": cover_path
                     })
 
     return templates.TemplateResponse("library.html", {"request": request, "books": books})

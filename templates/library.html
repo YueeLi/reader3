@@ -1,152 +1,367 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>My Library</title>
+        <title>我的书库 - My Library</title>
         <style>
-            body {
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                background: #f4f4f9;
+            * {
                 margin: 0;
-                padding: 40px;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                padding: 40px 20px;
             }
 
             .container {
-                max-width: 800px;
+                max-width: 1400px;
                 margin: 0 auto;
             }
 
-            h1 {
-                color: #333;
-                border-bottom: 2px solid #ddd;
-                padding-bottom: 10px;
+            .header {
+                text-align: center;
+                margin-bottom: 50px;
+                color: white;
+            }
+
+            .header h1 {
+                font-size: 3em;
+                font-weight: 700;
+                margin-bottom: 10px;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+                letter-spacing: 2px;
+            }
+
+            .header p {
+                font-size: 1.1em;
+                opacity: 0.9;
+                font-weight: 300;
+            }
+
+            .empty-state {
+                background: white;
+                padding: 60px 40px;
+                border-radius: 16px;
+                text-align: center;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            }
+
+            .empty-state p {
+                color: #666;
+                font-size: 1.1em;
+                line-height: 1.6;
+            }
+
+            .empty-state code {
+                background: #f5f5f5;
+                padding: 4px 8px;
+                border-radius: 4px;
+                color: #e74c3c;
+                font-family: "Monaco", "Courier New", monospace;
             }
 
             .book-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-                gap: 20px;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 30px;
                 margin-top: 30px;
             }
 
             .book-card {
                 background: white;
+                border-radius: 16px;
+                overflow: hidden;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                cursor: pointer;
+                position: relative;
+            }
+
+            .book-card:hover {
+                transform: translateY(-8px);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            }
+
+            .book-cover {
+                width: 100%;
+                height: 380px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .book-cover img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .book-cover-placeholder {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                color: white;
+                font-size: 3em;
+                font-weight: 700;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
                 padding: 20px;
-                border-radius: 8px;
-                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-                transition: transform 0.2s;
+                text-align: center;
+                line-height: 1.2;
+            }
+
+            .book-info {
+                padding: 24px;
             }
 
             .book-title {
-                font-size: 1.2em;
-                font-weight: bold;
+                font-size: 1.3em;
+                font-weight: 700;
                 color: #2c3e50;
-                margin-bottom: 10px;
+                margin-bottom: 12px;
+                line-height: 1.4;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                min-height: 2.8em;
             }
 
             .book-meta {
-                color: #666;
-                font-size: 0.9em;
-                margin-bottom: 15px;
+                color: #7f8c8d;
+                font-size: 0.95em;
+                margin-bottom: 20px;
+                line-height: 1.6;
             }
 
-            .btn {
-                display: inline-block;
-                background: #3498db;
-                color: white;
-                text-decoration: none;
-                padding: 8px 15px;
-                border-radius: 4px;
-                font-size: 0.9em;
-                border: none;
-                cursor: pointer;
+            .book-meta-item {
+                display: flex;
+                align-items: center;
+                margin-bottom: 6px;
             }
 
-            .btn:hover {
-                background: #2980b9;
+            .book-meta-icon {
+                margin-right: 8px;
+                opacity: 0.7;
             }
 
             .btn-group {
                 display: flex;
                 gap: 10px;
-                margin-top: 10px;
+                margin-top: 16px;
+            }
+
+            .btn {
+                flex: 1;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                text-decoration: none;
+                padding: 12px 20px;
+                border-radius: 8px;
+                font-size: 0.95em;
+                font-weight: 600;
+                border: none;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            }
+
+            .btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            }
+
+            .btn:active {
+                transform: translateY(0);
             }
 
             .export-dropdown {
                 position: relative;
-                display: inline-block;
+                flex: 1;
             }
 
             .export-btn {
-                background: #27ae60;
+                width: 100%;
+                background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+                box-shadow: 0 4px 12px rgba(245, 87, 108, 0.3);
             }
 
             .export-btn:hover {
-                background: #229954;
+                box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
             }
 
             .dropdown-content {
                 display: none;
                 position: absolute;
+                bottom: 100%;
+                left: 0;
+                right: 0;
                 background-color: white;
-                min-width: 200px;
-                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-                z-index: 1;
-                border-radius: 4px;
+                margin-bottom: 8px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+                z-index: 10;
+                border-radius: 8px;
                 overflow: hidden;
+                animation: slideUp 0.2s ease;
+            }
+
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             .dropdown-content a {
-                color: #333;
-                padding: 12px 16px;
+                color: #2c3e50;
+                padding: 14px 18px;
                 text-decoration: none;
                 display: block;
                 font-size: 0.9em;
+                font-weight: 500;
+                transition: all 0.2s ease;
+                border-left: 3px solid transparent;
             }
 
             .dropdown-content a:hover {
-                background-color: #f1f1f1;
+                background: linear-gradient(90deg, #f5f7fa 0%, #c3cfe2 100%);
+                border-left-color: #667eea;
+                padding-left: 22px;
             }
 
             .export-dropdown:hover .dropdown-content {
                 display: block;
             }
 
-            .loading {
-                display: none;
-                color: #666;
-                font-size: 0.9em;
-                margin-top: 10px;
+            .stats {
+                display: flex;
+                justify-content: center;
+                gap: 40px;
+                margin-bottom: 40px;
+                flex-wrap: wrap;
+            }
+
+            .stat-item {
+                background: rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
+                padding: 20px 40px;
+                border-radius: 12px;
+                text-align: center;
+                color: white;
+            }
+
+            .stat-number {
+                font-size: 2.5em;
+                font-weight: 700;
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .stat-label {
+                font-size: 0.95em;
+                opacity: 0.9;
+                font-weight: 300;
+            }
+
+            @media (max-width: 768px) {
+                .header h1 {
+                    font-size: 2em;
+                }
+
+                .book-grid {
+                    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+                    gap: 20px;
+                }
+
+                .book-cover {
+                    height: 320px;
+                }
+
+                .btn-group {
+                    flex-direction: column;
+                }
             }
         </style>
     </head>
 
     <body>
         <div class="container">
-            <h1>Library</h1>
+            <div class="header">
+                <h1>📚 我的书库</h1>
+                <p>My Personal Library</p>
+            </div>
+
+            {% if books %}
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-number">{{ books|length }}</span>
+                    <span class="stat-label">藏书</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">{{ books|sum(attribute='chapters') }}</span>
+                    <span class="stat-label">章节</span>
+                </div>
+            </div>
+            {% endif %}
 
             {% if not books %}
-            <p>No processed books found. Run <code>reader3.py</code> on an epub first.</p>
+            <div class="empty-state">
+                <p>📖 书库空空如也，快去添加你的第一本书吧！</p>
+                <p style="margin-top: 20px;">运行 <code>reader3.py</code> 处理 EPUB 文件</p>
+            </div>
             {% endif %}
 
             <div class="book-grid">
                 {% for book in books %}
                 <div class="book-card">
-                    <div class="book-title">{{ book.title }}</div>
-                    <div class="book-meta">
-                        {{ book.author }}<br>
-                        {{ book.chapters }} sections
+                    <div class="book-cover">
+                        {% if book.cover_path %}
+                        <img src="{{ book.cover_path }}" alt="{{ book.title }}"
+                            onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="book-cover-placeholder" style="display: none;">
+                            {{ book.title[:2] if book.title|length > 1 else book.title }}
+                        </div>
+                        {% else %}
+                        <div class="book-cover-placeholder">
+                            {{ book.title[:2] if book.title|length > 1 else book.title }}
+                        </div>
+                        {% endif %}
                     </div>
-                    <div class="btn-group">
-                        <a href="/read/{{ book.id }}/0" class="btn">Read Book</a>
-                        <div class="export-dropdown">
-                            <button class="btn export-btn">Export ▼</button>
-                            <div class="dropdown-content">
-                                <a href="/export/{{ book.id }}/markdown?mode=single" download>Markdown (Single File)</a>
-                                <a href="/export/{{ book.id }}/markdown?mode=chapters" download>Markdown (Chapters)</a>
-                                <a href="/export/{{ book.id }}/pdf" download>PDF</a>
+                    <div class="book-info">
+                        <div class="book-title">{{ book.title }}</div>
+                        <div class="book-meta">
+                            <div class="book-meta-item">
+                                <span class="book-meta-icon">✍️</span>
+                                <span>{{ book.author }}</span>
+                            </div>
+                            <div class="book-meta-item">
+                                <span class="book-meta-icon">📑</span>
+                                <span>{{ book.chapters }} 个章节</span>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <a href="/read/{{ book.id }}/0" class="btn">📖 阅读</a>
+                            <div class="export-dropdown">
+                                <button class="btn export-btn">💾 导出 ▼</button>
+                                <div class="dropdown-content">
+                                    <a href="/export/{{ book.id }}/markdown?mode=single">📄 Markdown (单文件)</a>
+                                    <a href="/export/{{ book.id }}/markdown?mode=chapters">📚 Markdown (分章节)</a>
+                                    <a href="/export/{{ book.id }}/pdf">📕 PDF</a>
+                                </div>
                             </div>
                         </div>
                     </div>
