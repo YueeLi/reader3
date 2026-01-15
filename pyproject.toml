@@ -10,4 +10,18 @@ dependencies = [
     "fastapi>=0.121.2",
     "jinja2>=3.1.6",
     "uvicorn>=0.38.0",
+    "markdownify>=0.11.6",
+    "weasyprint>=60.0",
+    "pyyaml>=6.0",
+    "pillow>=10.0",
 ]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "httpx>=0.24",
+]
+
+[tool.setuptools]
+py-modules = ["reader3", "server"]

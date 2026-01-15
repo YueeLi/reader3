@@ -5,10 +5,18 @@ build/
 dist/
 wheels/
 *.egg-info
+*.pytest_cache
+*.so
+*.whl
 
 # Virtual environments
 .venv
 
 # Custom
-*_data/
-*.epub
+books/
+epubs/*.epub
+.DS_Store
+
+# Tests
+*.coverage
+

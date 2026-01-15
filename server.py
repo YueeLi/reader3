@@ -3,18 +3,23 @@ import pickle
 from functools import lru_cache
 from typing import Optional
 
-from fastapi import FastAPI, Request, HTTPException
+# Set library path for WeasyPrint on macOS
+if os.uname().sysname == 'Darwin':  # macOS
+    os.environ.setdefault('DYLD_LIBRARY_PATH', '/opt/homebrew/lib')
+
+from fastapi import FastAPI, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from reader3 import Book, BookMetadata, ChapterContent, TOCEntry
+from export_service import export_book, BookNotFoundError, ExportError
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
 # Where are the book folders located?
-BOOKS_DIR = "."
+BOOKS_DIR = "books"
 
 @lru_cache(maxsize=10)
 def load_book_cached(folder_name: str) -> Optional[Book]:
@@ -39,10 +44,14 @@ async def library_view(request: Request):
     """Lists all available processed books."""
     books = []
 
+    # 确保 books 目录存在
+    os.makedirs(BOOKS_DIR, exist_ok=True)
+    
     # Scan directory for folders ending in '_data' that have a book.pkl
     if os.path.exists(BOOKS_DIR):
         for item in os.listdir(BOOKS_DIR):
-            if item.endswith("_data") and os.path.isdir(item):
+            item_path = os.path.join(BOOKS_DIR, item)
+            if item.endswith("_data") and os.path.isdir(item_path):
                 # Try to load it to get the title
                 book = load_book_cached(item)
                 if book:
@@ -56,9 +65,27 @@ async def library_view(request: Request):
     return templates.TemplateResponse("library.html", {"request": request, "books": books})
 
 @app.get("/read/{book_id}", response_class=HTMLResponse)
-async def redirect_to_first_chapter(book_id: str):
+async def redirect_to_first_chapter(request: Request, book_id: str):
     """Helper to just go to chapter 0."""
-    return await read_chapter(book_id=book_id, chapter_index=0)
+    return await read_chapter(request=request, book_id=book_id, chapter_index=0)
+
+@app.get("/read/{book_id}/images/{image_name}")
+async def serve_image(book_id: str, image_name: str):
+    """
+    Serves images specifically for a book.
+    The HTML contains <img src="images/pic.jpg">.
+    The browser resolves this to /read/{book_id}/images/pic.jpg.
+    """
+    # Security check: ensure book_id is clean
+    safe_book_id = os.path.basename(book_id)
+    safe_image_name = os.path.basename(image_name)
+
+    img_path = os.path.join(BOOKS_DIR, safe_book_id, "images", safe_image_name)
+
+    if not os.path.exists(img_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    return FileResponse(img_path)
 
 @app.get("/read/{book_id}/{chapter_index}", response_class=HTMLResponse)
 async def read_chapter(request: Request, book_id: str, chapter_index: int):
@@ -86,23 +113,77 @@ async def read_chapter(request: Request, book_id: str, chapter_index: int):
         "next_idx": next_idx
     })
 
-@app.get("/read/{book_id}/images/{image_name}")
-async def serve_image(book_id: str, image_name: str):
+
+@app.get("/export/{book_id}/markdown")
+async def export_markdown(
+    book_id: str,
+    mode: str = Query("single", pattern="^(single|chapters)$")
+):
     """
-    Serves images specifically for a book.
-    The HTML contains <img src="images/pic.jpg">.
-    The browser resolves this to /read/{book_id}/images/pic.jpg.
+    Export book as Markdown.
+    
+    Query Parameters:
+        mode: 'single' for single file, 'chapters' for ZIP archive
+    
+    Returns:
+        FileResponse with .md or .zip file
     """
-    # Security check: ensure book_id is clean
-    safe_book_id = os.path.basename(book_id)
-    safe_image_name = os.path.basename(image_name)
+    try:
+        result = export_book(book_id, format='markdown', mode=mode)
+        
+        # Encode filename for Content-Disposition header
+        from urllib.parse import quote
+        encoded_filename = quote(result.filename)
+        
+        return FileResponse(
+            path=result.file_path,
+            media_type=result.mime_type,
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
+            }
+        )
+    
+    except BookNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
+    except ExportError as e:
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
-    img_path = os.path.join(BOOKS_DIR, safe_book_id, "images", safe_image_name)
 
-    if not os.path.exists(img_path):
-        raise HTTPException(status_code=404, detail="Image not found")
-
-    return FileResponse(img_path)
+@app.get("/export/{book_id}/pdf")
+async def export_pdf_endpoint(book_id: str):
+    """
+    Export book as PDF.
+    
+    Returns:
+        FileResponse with .pdf file
+    """
+    try:
+        result = export_book(book_id, format='pdf')
+        
+        # Encode filename for Content-Disposition header
+        from urllib.parse import quote
+        encoded_filename = quote(result.filename)
+        
+        return FileResponse(
+            path=result.file_path,
+            media_type=result.mime_type,
+            headers={
+                "Content-Disposition": f"attachment; filename*=UTF-8''{encoded_filename}"
+            }
+        )
+    
+    except BookNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    
+    except ExportError as e:
+        raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
+    
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
