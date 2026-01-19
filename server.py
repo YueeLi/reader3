@@ -12,6 +12,7 @@ from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+import reader3 as reader3_module
 from reader3 import Book, BookMetadata, ChapterContent, TOCEntry
 from export_service import export_book, BookNotFoundError, ExportError
 
@@ -23,6 +24,14 @@ app.mount("/books", StaticFiles(directory="books"), name="books")
 
 # Where are the book folders located?
 BOOKS_DIR = "books"
+
+class _ReaderUnpickler(pickle.Unpickler):
+    """Maps legacy pickles saved under __main__ to the reader3 module."""
+    def find_class(self, module, name):
+        if module == "__main__" and hasattr(reader3_module, name):
+            return getattr(reader3_module, name)
+        return super().find_class(module, name)
+
 
 @lru_cache(maxsize=10)
 def load_book_cached(folder_name: str) -> Optional[Book]:
@@ -36,7 +45,7 @@ def load_book_cached(folder_name: str) -> Optional[Book]:
 
     try:
         with open(file_path, "rb") as f:
-            book = pickle.load(f)
+            book = _ReaderUnpickler(f).load()
         return book
     except Exception as e:
         print(f"Error loading book {folder_name}: {e}")

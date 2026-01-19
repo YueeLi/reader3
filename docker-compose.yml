@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    ports:
+      - "8123:8123"
+    volumes:
+      - ./books:/app/books
+      - ./epubs:/app/epubs
+    environment:
+      - PYTHONUNBUFFERED=1
+    command: uvicorn server:app --host 0.0.0.0 --port 8123
+    restart: unless-stopped
