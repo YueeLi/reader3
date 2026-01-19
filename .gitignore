@@ -15,8 +15,8 @@ wheels/
 # Custom
 books/
 epubs/*.epub
+certs/
 .DS_Store
 
 # Tests
 *.coverage
-
