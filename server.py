@@ -7,7 +7,7 @@ from typing import Optional
 if os.uname().sysname == 'Darwin':  # macOS
     os.environ.setdefault('DYLD_LIBRARY_PATH', '/opt/homebrew/lib')
 
-from fastapi import FastAPI, Request, HTTPException, Query
+from fastapi import FastAPI, Request, HTTPException, Query, Response
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -87,6 +87,16 @@ async def library_view(request: Request):
                     })
 
     return templates.TemplateResponse("library.html", {"request": request, "books": books})
+
+@app.head("/", include_in_schema=False)
+async def library_view_head():
+    """Health/HEAD check for load balancers."""
+    return Response(status_code=200)
+
+@app.get("/healthz", include_in_schema=False)
+async def health_check():
+    """Simple health endpoint."""
+    return {"status": "ok"}
 
 @app.get("/read/{book_id}", response_class=HTMLResponse)
 async def redirect_to_first_chapter(request: Request, book_id: str):
