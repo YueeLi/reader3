@@ -19,6 +19,9 @@ from export_service import export_book, BookNotFoundError, ExportError
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
+# Ensure books directory exists before mounting static files.
+os.makedirs("books", exist_ok=True)
+
 # Mount books directory as static files for serving cover images
 app.mount("/books", StaticFiles(directory="books"), name="books")
 

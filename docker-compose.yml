@@ -1,15 +1,64 @@
-version: "3.9"
-
 services:
-  app:
-    build: .
-    ports:
-      - "443:8123"
-    volumes:
-      - ./books:/app/books
-      - ./epubs:/app/epubs
-      - ./certs:/app/certs:ro
+  postgres:
+    image: postgres:15
     environment:
-      - PYTHONUNBUFFERED=1
-    command: uvicorn server:app --host 0.0.0.0 --port 8123 --ssl-keyfile /app/certs/reader3.key --ssl-certfile /app/certs/reader3.crt
+      POSTGRES_USER: logto
+      POSTGRES_PASSWORD: logto_password
+      POSTGRES_DB: logto
+    volumes:
+      - logto_pgdata:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U logto -d logto"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  logto:
+    image: ghcr.io/logto-io/logto:1.35.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: postgres://logto:logto_password@postgres:5432/logto
+      TRUST_PROXY_HEADER: "1"
+      ENDPOINT: https://logto.flli.top
+      ADMIN_ENDPOINT: https://logtoadm.flli.top
+    expose:
+      - "3001"
+      - "3002"
+    restart: unless-stopped
+
+  logto-init:
+    image: ghcr.io/logto-io/logto:1.35.0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_URL: postgres://logto:logto_password@postgres:5432/logto
+    entrypoint: ["sh", "-lc"]
+    command: "node /etc/logto/packages/cli/bin/logto.js db seed; cd /etc/logto; npm run alteration deploy"
+    profiles: ["init"]
+
+  reader3:
+    build: .
+    expose:
+      - "8123"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.27
+    depends_on:
+      logto:
+        condition: service_started
+      reader3:
+        condition: service_started
+    ports:
+      - "443:443"
+    volumes:
+      - ./nginx/logto.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    restart: unless-stopped
+
+volumes:
+  logto_pgdata:
