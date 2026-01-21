@@ -15,7 +15,8 @@ export type ChapterContent = {
 
 export type TocEntry = {
   title: string;
-  href: string;
+  chapterIndex: number | null;
+  anchor?: string | null;
   depth: number;
 };
 

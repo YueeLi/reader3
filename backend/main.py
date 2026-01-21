@@ -1,5 +1,7 @@
 import os
 import pickle
+import shutil
+import tempfile
 from functools import lru_cache
 from typing import Optional
 
@@ -7,7 +9,7 @@ from typing import Optional
 if os.uname().sysname == 'Darwin':  # macOS
     os.environ.setdefault('DYLD_LIBRARY_PATH', '/opt/homebrew/lib')
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -76,18 +78,48 @@ def _find_cover_url(book_id: str) -> Optional[str]:
     return None
 
 
-def _flatten_toc(entries, depth=0):
+def _sanitize_book_name(filename: str) -> str:
+    base_name = os.path.splitext(os.path.basename(filename))[0].strip()
+    if not base_name:
+        return "book"
+    safe_name = "".join(
+        char for char in base_name if char.isalnum() or char in "._- "
+    )
+    safe_name = safe_name.strip().replace(" ", "_")
+    return safe_name or "book"
+
+
+def _resolve_unique_folder(base_name: str) -> str:
+    candidate = f"{base_name}_data"
+    if not os.path.exists(os.path.join(BOOKS_DIR, candidate)):
+        return candidate
+
+    suffix = 2
+    while True:
+        candidate = f"{base_name}_{suffix}_data"
+        if not os.path.exists(os.path.join(BOOKS_DIR, candidate)):
+            return candidate
+        suffix += 1
+
+
+def _build_spine_index(book: Book) -> dict:
+    return {chapter.href: idx for idx, chapter in enumerate(book.spine)}
+
+
+def _flatten_toc(entries, spine_index, depth=0):
     flattened = []
     for entry in entries:
+        chapter_index = spine_index.get(entry.file_href)
         flattened.append(
             {
                 "title": entry.title,
-                "href": entry.href,
+                "chapterIndex": chapter_index,
+                "anchor": entry.anchor or None,
                 "depth": depth,
             }
         )
         if entry.children:
-            flattened.extend(_flatten_toc(entry.children, depth + 1))
+            flattened.extend(_flatten_toc(entry.children, spine_index, depth + 1))
     return flattened
 
 
@@ -116,6 +148,52 @@ async def list_books():
 
     return books
 
+
+@app.post("/api/books/import")
+async def import_book(file: UploadFile = File(...)):
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Missing EPUB filename")
+
+    if not file.filename.lower().endswith(".epub"):
+        raise HTTPException(status_code=400, detail="Only .epub files are supported")
+
+    temp_path = None
+    output_dir = None
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".epub") as tmp:
+            temp_path = tmp.name
+            shutil.copyfileobj(file.file, tmp)
+
+        base_name = _sanitize_book_name(file.filename)
+        folder_name = _resolve_unique_folder(base_name)
+        output_dir = os.path.join(BOOKS_DIR, folder_name)
+
+        book_obj = reader3_module.process_epub(temp_path, output_dir)
+        reader3_module.save_to_pickle(book_obj, output_dir)
+
+        load_book_cached.cache_clear()
+
+        return {
+            "id": folder_name,
+            "title": book_obj.metadata.title,
+            "author": ", ".join(book_obj.metadata.authors),
+            "chapters": len(book_obj.spine),
+            "coverUrl": _find_cover_url(folder_name),
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:
+        if output_dir and os.path.exists(output_dir):
+            shutil.rmtree(output_dir, ignore_errors=True)
+        raise HTTPException(status_code=500, detail=f"Import failed: {exc}")
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
+        try:
+            await file.close()
+        except Exception:
+            pass
+
 @app.get("/healthz", include_in_schema=False)
 async def health_check():
     """Simple health endpoint."""
@@ -127,13 +205,14 @@ async def get_book_detail(book_id: str):
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
 
+    spine_index = _build_spine_index(book)
     return {
         "id": book_id,
         "title": book.metadata.title,
         "author": ", ".join(book.metadata.authors),
         "chapters": len(book.spine),
         "coverUrl": _find_cover_url(book_id),
-        "toc": _flatten_toc(book.toc),
+        "toc": _flatten_toc(book.toc, spine_index),
     }
 
 
@@ -147,11 +226,16 @@ async def get_book_chapter(book_id: str, chapter_index: int):
         raise HTTPException(status_code=404, detail="Chapter not found")
 
     chapter = book.spine[chapter_index]
+    html = chapter.content.replace(
+        'src="images/', f'src="/books/{book_id}/images/'
+    ).replace(
+        "src='images/", f"src='/books/{book_id}/images/"
+    )
     return {
         "id": chapter.id,
         "title": chapter.title,
         "order": chapter.order,
-        "html": chapter.content,
+        "html": html,
     }
 
 

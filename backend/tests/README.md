@@ -4,8 +4,8 @@
 
 本测试套件覆盖了 EPUB 阅读器应用的核心功能，包括：
 
-- **阅读功能** - 图书馆页面、阅读器页面、目录导航
-- **翻页跳转** - 章节导航、前后翻页、TOC 点击跳转
+- **阅读功能** - 书籍列表 API、章节 API、目录导航
+- **翻页跳转** - 章节导航、前后翻页、TOC 数据返回
 - **导出功能** - Markdown 单文件、Markdown 章节、PDF 导出
 - **图片处理** - 图片服务、base64 编码
 - **错误处理** - 404 错误、无效参数处理
@@ -16,7 +16,7 @@
 backend/tests/
 ├── __init__.py                 # 测试包初始化
 ├── conftest.py                 # Pytest 配置和 fixtures
-├── test_reading.py             # 阅读功能测试
+├── test_reading.py             # 阅读 API 测试
 ├── test_export.py              # 导出功能测试
 ├── test_image_processor.py     # 图片处理测试
 ├── test_export_service.py      # 导出服务测试
@@ -112,17 +112,17 @@ pytest backend/tests/ --lf
 
 #### TestLibraryView
 
-- ✅ 图书馆页面加载
+- ✅ 书籍列表 API加载
 - ✅ 显示书籍列表
 - ✅ 阅读按钮存在
 - ✅ 导出按钮存在
 
 #### TestReaderView
 
-- ✅ 阅读器页面加载
+- ✅ 章节 API加载
 - ✅ 显示书籍内容
 - ✅ 侧边栏存在
-- ✅ 目录显示
+- ✅ 目录数据返回
 - ✅ JavaScript spineMap 生成
 - ✅ 导出菜单存在
 

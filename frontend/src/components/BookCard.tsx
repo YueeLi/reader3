@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import type { BookListItem } from "../types/book";
+import { downloadExport } from "../api/exports";
 
 export default function BookCard({ book }: { book: BookListItem }) {
   const coverStyle = book.coverUrl
@@ -19,8 +20,14 @@ export default function BookCard({ book }: { book: BookListItem }) {
           <Link className="ghost-button" to={`/read/${book.id}/0`}>
             Open
           </Link>
-          <button className="ghost-button" type="button">
-            Export
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={() => {
+              void downloadExport(book.id, "markdown", "single");
+            }}
+          >
+            Export MD
           </button>
         </div>
       </div>

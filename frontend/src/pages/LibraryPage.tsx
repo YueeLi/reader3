@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchBooks } from "../api/books";
 import type { BookListItem } from "../types/book";
 import BookGrid from "../components/BookGrid";
+import { LIBRARY_REFRESH_EVENT, LIBRARY_RESET_EVENT } from "../app/events";
 
 const filters = ["All", "Recently Added", "In Progress", "Finished"];
 
@@ -10,25 +11,51 @@ export default function LibraryPage() {
   const [activeFilter, setActiveFilter] = useState(filters[0]);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const isMounted = useRef(true);
 
-  useEffect(() => {
-    let mounted = true;
+  const loadBooks = useCallback(() => {
     setStatus("loading");
     fetchBooks()
       .then((data) => {
-        if (mounted) {
+        if (isMounted.current) {
           setBooks(data);
           setStatus("idle");
         }
       })
       .catch(() => {
-        if (mounted) {
+        if (isMounted.current) {
           setStatus("error");
         }
       });
+  }, []);
+
+  useEffect(() => {
+    loadBooks();
+  }, [loadBooks]);
+
+  useEffect(() => {
+    const handleRefresh = () => {
+      loadBooks();
+    };
+    const handleReset = () => {
+      setActiveFilter(filters[0]);
+      setQuery("");
+      loadBooks();
+    };
+
+    window.addEventListener(LIBRARY_REFRESH_EVENT, handleRefresh);
+    window.addEventListener(LIBRARY_RESET_EVENT, handleReset);
 
     return () => {
-      mounted = false;
+      window.removeEventListener(LIBRARY_REFRESH_EVENT, handleRefresh);
+      window.removeEventListener(LIBRARY_RESET_EVENT, handleReset);
+    };
+  }, [loadBooks]);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
     };
   }, []);
 

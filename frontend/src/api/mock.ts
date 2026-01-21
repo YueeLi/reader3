@@ -23,8 +23,8 @@ export const mockBookDetail: BookDetail = {
   author: "A. Librarian",
   chapters: 2,
   toc: [
-    { title: "Opening the Cover", href: "#chapter-0", depth: 0 },
-    { title: "Chapter One", href: "#chapter-1", depth: 0 }
+    { title: "Opening the Cover", chapterIndex: 0, anchor: null, depth: 0 },
+    { title: "Chapter One", chapterIndex: 1, anchor: null, depth: 0 }
   ]
 };
 

@@ -193,7 +193,7 @@ Replace `TemplateResponse(name, {"request": request})` by `TemplateResponse(requ
 
 - [x] 章节导航（前一章/后一章）
 - [x] 直接跳转到指定章节
-- [x] TOC 点击跳转验证
+- [x] TOC 数据返回验证
 - [x] 首章和末章的边界处理
 - [x] 无效章节的 404 处理
 

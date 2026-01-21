@@ -11,6 +11,7 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
+from . import reader3 as reader3_module
 from .reader3 import Book
 
 
@@ -49,6 +50,14 @@ BOOKS_DIR = os.path.join(BASE_DIR, "books")
 
 
 # --- Utility Functions ---
+
+class _ReaderUnpickler(pickle.Unpickler):
+    """Maps legacy pickles saved under __main__ or reader3 to reader3 module."""
+    def find_class(self, module, name):
+        if module in {"__main__", "reader3"} and hasattr(reader3_module, name):
+            return getattr(reader3_module, name)
+        return super().find_class(module, name)
+
 
 def sanitize_filename(title: str, max_length: int = 200) -> str:
     """
@@ -121,22 +130,8 @@ def load_book(book_id: str) -> Book:
         raise BookNotFoundError(f"Book not found: {book_id}")
     
     try:
-        # Import reader3 to make classes available
-        import sys
-        import reader3
-        
-        # Add reader3 classes to __main__ namespace for pickle compatibility
-        # This handles the case where pickle was saved with __main__.Book
-        if '__main__' in sys.modules:
-            main_module = sys.modules['__main__']
-            if not hasattr(main_module, 'Book'):
-                main_module.Book = reader3.Book
-                main_module.BookMetadata = reader3.BookMetadata
-                main_module.ChapterContent = reader3.ChapterContent
-                main_module.TOCEntry = reader3.TOCEntry
-        
         with open(file_path, "rb") as f:
-            book = pickle.load(f)
+            book = _ReaderUnpickler(f).load()
         return book
     except Exception as e:
         raise BookNotFoundError(f"Failed to load book {book_id}: {e}")
