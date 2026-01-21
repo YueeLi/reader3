@@ -3,7 +3,8 @@
 import os
 import base64
 import pytest
-from image_processor import ImageProcessor
+from backend.app.services.image_processor import ImageProcessor
+from backend.app.services.export_service import BOOKS_DIR
 
 
 class TestImageProcessor:
@@ -12,7 +13,7 @@ class TestImageProcessor:
     @pytest.fixture
     def processor(self, test_book_id):
         """Create an ImageProcessor instance."""
-        return ImageProcessor('books', test_book_id)
+        return ImageProcessor(BOOKS_DIR, test_book_id)
     
     def test_processor_initialization(self, processor):
         """Test that ImageProcessor initializes correctly."""

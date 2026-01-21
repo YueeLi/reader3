@@ -5,8 +5,8 @@ import sys
 import pytest
 from fastapi.testclient import TestClient
 
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add repo root to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 # Set environment variable for WeasyPrint
 os.environ['DYLD_LIBRARY_PATH'] = '/opt/homebrew/lib'
@@ -14,7 +14,7 @@ os.environ['DYLD_LIBRARY_PATH'] = '/opt/homebrew/lib'
 @pytest.fixture
 def client():
     """Create a test client for the FastAPI app."""
-    from server import app
+    from backend.main import app
     return TestClient(app)
 
 @pytest.fixture

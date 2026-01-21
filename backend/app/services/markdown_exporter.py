@@ -14,9 +14,9 @@ from bs4 import BeautifulSoup
 from markdownify import markdownify as md
 import yaml
 
-from reader3 import Book, BookMetadata, TOCEntry
-from image_processor import ImageProcessor
-from export_service import sanitize_filename, BOOKS_DIR
+from .reader3 import Book, BookMetadata, TOCEntry
+from .image_processor import ImageProcessor
+from .export_service import sanitize_filename, BOOKS_DIR
 
 
 def generate_frontmatter(metadata: BookMetadata) -> str:

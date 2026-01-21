@@ -11,7 +11,7 @@ import re
 from dataclasses import dataclass
 from typing import Optional
 
-from reader3 import Book
+from .reader3 import Book
 
 
 # --- Data Structures ---
@@ -44,7 +44,8 @@ class ConversionError(ExportError):
 
 # --- Constants ---
 
-BOOKS_DIR = "books"
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+BOOKS_DIR = os.path.join(BASE_DIR, "books")
 
 
 # --- Utility Functions ---
@@ -163,7 +164,7 @@ def export_book(book_id: str, format: str, mode: Optional[str] = None) -> Export
     # Route to appropriate exporter
     if format == 'markdown':
         # Import here to avoid circular dependencies
-        from markdown_exporter import export_single_file, export_chapters
+        from .markdown_exporter import export_single_file, export_chapters
         
         if mode == 'chapters':
             file_path = export_chapters(book, book_id)
@@ -176,7 +177,7 @@ def export_book(book_id: str, format: str, mode: Optional[str] = None) -> Export
     
     elif format == 'pdf':
         # Import here to avoid circular dependencies
-        from pdf_exporter import export_pdf
+        from .pdf_exporter import export_pdf
         
         file_path = export_pdf(book, book_id)
         filename = f"{sanitize_filename(book.metadata.title)}.pdf"

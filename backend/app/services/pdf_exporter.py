@@ -10,9 +10,9 @@ from typing import Dict
 from bs4 import BeautifulSoup
 from weasyprint import HTML, CSS
 
-from reader3 import Book, BookMetadata, TOCEntry
-from image_processor import ImageProcessor
-from export_service import sanitize_filename, BOOKS_DIR
+from .reader3 import Book, BookMetadata, TOCEntry
+from .image_processor import ImageProcessor
+from .export_service import sanitize_filename, BOOKS_DIR
 
 
 def generate_title_page(metadata: BookMetadata) -> str:

@@ -2,12 +2,12 @@
 
 import os
 import pytest
-from export_service import (
+from backend.app.services.export_service import (
     sanitize_filename,
     load_book,
     export_book,
     BookNotFoundError,
-    ExportError
+    ExportError,
 )
 
 

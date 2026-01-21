@@ -12,4 +12,4 @@ fi
 
 # Run tests
 echo "Running tests..."
-python -m pytest tests/ -v "$@"
+python -m pytest backend/tests/ -v "$@"

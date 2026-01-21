@@ -13,7 +13,7 @@
 ## 测试文件结构
 
 ```
-tests/
+backend/tests/
 ├── __init__.py                 # 测试包初始化
 ├── conftest.py                 # Pytest 配置和 fixtures
 ├── test_reading.py             # 阅读功能测试
@@ -40,61 +40,61 @@ uv pip install pytest pytest-cov httpx beautifulsoup4
 ### 运行所有测试
 
 ```bash
-pytest tests/
+pytest backend/tests/
 ```
 
 ### 运行特定测试文件
 
 ```bash
 # 测试阅读功能
-pytest tests/test_reading.py
+pytest backend/tests/test_reading.py
 
 # 测试导出功能
-pytest tests/test_export.py
+pytest backend/tests/test_export.py
 
 # 测试图片处理
-pytest tests/test_image_processor.py
+pytest backend/tests/test_image_processor.py
 
 # 测试导出服务
-pytest tests/test_export_service.py
+pytest backend/tests/test_export_service.py
 ```
 
 ### 运行特定测试类
 
 ```bash
 # 测试图书馆视图
-pytest tests/test_reading.py::TestLibraryView
+pytest backend/tests/test_reading.py::TestLibraryView
 
 # 测试 Markdown 导出
-pytest tests/test_export.py::TestMarkdownExport
+pytest backend/tests/test_export.py::TestMarkdownExport
 
 # 测试 PDF 导出
-pytest tests/test_export.py::TestPDFExport
+pytest backend/tests/test_export.py::TestPDFExport
 ```
 
 ### 运行特定测试用例
 
 ```bash
-pytest tests/test_reading.py::TestLibraryView::test_library_page_loads
+pytest backend/tests/test_reading.py::TestLibraryView::test_library_page_loads
 ```
 
 ### 显示详细输出
 
 ```bash
-pytest tests/ -v
+pytest backend/tests/ -v
 ```
 
 ### 显示打印输出
 
 ```bash
-pytest tests/ -s
+pytest backend/tests/ -s
 ```
 
 ### 生成覆盖率报告
 
 ```bash
 # 生成覆盖率报告
-pytest tests/ --cov=. --cov-report=html
+pytest backend/tests/ --cov=. --cov-report=html
 
 # 查看报告
 open htmlcov/index.html
@@ -103,7 +103,7 @@ open htmlcov/index.html
 ### 只运行失败的测试
 
 ```bash
-pytest tests/ --lf
+pytest backend/tests/ --lf
 ```
 
 ## 测试覆盖范围
@@ -260,7 +260,7 @@ jobs:
           pip install pytest pytest-cov
           pip install -r requirements.txt
       - name: Run tests
-        run: pytest tests/ --cov=. --cov-report=xml
+        run: pytest backend/tests/ --cov=. --cov-report=xml
       - name: Upload coverage
         uses: codecov/codecov-action@v2
 ```
@@ -278,7 +278,7 @@ ls books/学会提问（原书第12版）_data/book.pkl
 如果没有，运行：
 
 ```bash
-python reader3.py epubs/学会提问（原书第12版）.epub
+python -m backend.cli epubs/学会提问（原书第12版）.epub
 ```
 
 ### 测试失败：WeasyPrint 错误
@@ -287,7 +287,7 @@ python reader3.py epubs/学会提问（原书第12版）.epub
 
 ```bash
 export DYLD_LIBRARY_PATH=/opt/homebrew/lib
-pytest tests/
+pytest backend/tests/
 ```
 
 ### 测试失败：导入错误
@@ -296,7 +296,7 @@ pytest tests/
 
 ```bash
 cd /path/to/reader3
-pytest tests/
+pytest backend/tests/
 ```
 
 ## 添加新测试
