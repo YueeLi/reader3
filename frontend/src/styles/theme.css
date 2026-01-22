@@ -6,13 +6,18 @@
   --bg-deep: #ebe2d3;
   --surface: #ffffff;
   --surface-muted: #f3e9db;
+  --surface-glass: rgba(255, 255, 255, 0.78);
+  --surface-strong: rgba(255, 255, 255, 0.92);
   --text: #1a1a1a;
   --text-muted: #4f4a44;
   --accent: #d05b2d;
   --accent-dark: #a6401d;
   --accent-soft: #f1c7a8;
+  --accent-glow: rgba(208, 91, 45, 0.25);
   --ink: #18233b;
   --shadow: 0 20px 60px rgba(26, 18, 7, 0.12);
+  --shadow-soft: 0 12px 30px rgba(26, 18, 7, 0.12);
+  --shadow-strong: 0 26px 70px rgba(26, 18, 7, 0.18);
   --radius-lg: 28px;
   --radius-md: 18px;
   --radius-sm: 12px;
@@ -21,7 +26,8 @@
 
 body {
   font-family: "Space Grotesk", "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top right, #f8d7b5 0%, transparent 55%),
+  background: radial-gradient(circle at 10% 10%, rgba(255, 241, 212, 0.75) 0%, transparent 45%),
+    radial-gradient(circle at top right, #f8d7b5 0%, transparent 55%),
     linear-gradient(130deg, var(--bg) 0%, var(--bg-deep) 100%);
   color: var(--text);
 }
@@ -51,7 +57,8 @@ h4 {
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease,
+    border-color 0.2s ease, color 0.2s ease;
 }
 
 .ghost-button {
@@ -63,6 +70,7 @@ h4 {
 .ghost-button:hover {
   border-color: rgba(0, 0, 0, 0.2);
   transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(26, 18, 7, 0.12);
 }
 
 .ghost-button.disabled {
@@ -77,6 +85,7 @@ h4 {
 
 .accent-button:hover {
   background: var(--accent-dark);
+  box-shadow: 0 14px 32px rgba(208, 91, 45, 0.25);
 }
 
 .chip {
@@ -84,9 +93,20 @@ h4 {
   border: 1px solid transparent;
 }
 
+.chip:hover {
+  background: rgba(255, 255, 255, 0.82);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(26, 18, 7, 0.1);
+}
+
 .chip.active {
   background: var(--ink);
   color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 .empty-state {

@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { BookListItem } from "../types/book";
 import BookCard from "./BookCard";
 
@@ -13,8 +14,12 @@ export default function BookGrid({ books }: { books: BookListItem[] }) {
 
   return (
     <div className="book-grid">
-      {books.map((book) => (
-        <BookCard key={book.id} book={book} />
+      {books.map((book, index) => (
+        <BookCard
+          key={book.id}
+          book={book}
+          style={{ "--stagger": index } as CSSProperties}
+        />
       ))}
     </div>
   );

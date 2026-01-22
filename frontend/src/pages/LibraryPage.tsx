@@ -73,7 +73,7 @@ export default function LibraryPage() {
   return (
     <section className="library-page">
       <div className="library-hero">
-        <div>
+        <div className="library-hero-copy">
           <p className="eyebrow">Your shelf</p>
           <h1>Browse, annotate, and export without leaving your library.</h1>
           <p className="subhead">
@@ -81,42 +81,51 @@ export default function LibraryPage() {
             searchable.
           </p>
         </div>
-        <div className="library-stats">
-          <div>
-            <span className="stat-label">Books</span>
-            <strong>{books.length}</strong>
-          </div>
-          <div>
-            <span className="stat-label">Exports</span>
-            <strong>Ready</strong>
-          </div>
-          <div>
-            <span className="stat-label">Sync</span>
-            <strong>Local</strong>
+        <div className="library-hero-panel">
+          <div className="library-stats">
+            <div className="stat-card">
+              <span className="stat-label">Books</span>
+              <strong className="stat-value">{books.length}</strong>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Exports</span>
+              <strong className="stat-value">Ready</strong>
+            </div>
+            <div className="stat-card">
+              <span className="stat-label">Sync</span>
+              <strong className="stat-value">Local</strong>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="library-controls">
-        <div className="chips">
-          {filters.map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              className={filter === activeFilter ? "chip active" : "chip"}
-              onClick={() => setActiveFilter(filter)}
-            >
-              {filter}
-            </button>
-          ))}
+        <div className="library-controls-group">
+          <span className="controls-label">Filter</span>
+          <div className="chips">
+            {filters.map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                className={filter === activeFilter ? "chip active" : "chip"}
+                onClick={() => setActiveFilter(filter)}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
         </div>
         <div className="search">
-          <input
-            type="search"
-            placeholder="Search by title or author"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
+          <span className="controls-label">Search</span>
+          <div className="search-field">
+            <input
+              type="search"
+              placeholder="Search by title or author"
+              aria-label="Search by title or author"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </div>
         </div>
       </div>
 

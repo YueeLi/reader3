@@ -1,14 +1,21 @@
+import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import type { BookListItem } from "../types/book";
 import { downloadExport } from "../api/exports";
 
-export default function BookCard({ book }: { book: BookListItem }) {
+export default function BookCard({
+  book,
+  style,
+}: {
+  book: BookListItem;
+  style?: CSSProperties;
+}) {
   const coverStyle = book.coverUrl
     ? { backgroundImage: `url(${book.coverUrl})` }
     : { backgroundImage: "linear-gradient(135deg, #f5c08f, #d3764d)" };
 
   return (
-    <article className="book-card">
+    <article className="book-card" style={style}>
       <div className="book-cover" style={coverStyle}>
         <div className="book-cover-overlay" />
         <span className="book-chapters">{book.chapters} chapters</span>
