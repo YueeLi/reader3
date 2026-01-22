@@ -17,6 +17,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
     type: "success" | "error";
   } | null>(null);
   const navigate = useNavigate();
+  const duplicateMarker = "Book already imported";
 
   const handleImportClick = () => {
     if (importPhase !== "idle") {
@@ -81,6 +82,32 @@ export default function AppShell({ children }: { children: ReactNode }) {
     setImportResult(null);
     setImportingFileName(null);
   };
+
+  const importMessage = (() => {
+    if (importPhase === "importing") {
+      return (
+        importingFileName ||
+        "This might take a moment while we index pages."
+      );
+    }
+
+    const message = importResult?.message || "Please try again.";
+    const markerIndex = message.indexOf(duplicateMarker);
+    if (markerIndex !== -1) {
+      const detail = message
+        .slice(markerIndex + duplicateMarker.length)
+        .replace(/^:\s*/, "")
+        .trim();
+      return (
+        <span className="import-reason">
+          <span className="import-reason-tag">{duplicateMarker}</span>
+          {detail ? <span className="import-reason-text">{detail}</span> : null}
+        </span>
+      );
+    }
+
+    return message;
+  })();
 
   return (
     <div className="app-shell">
@@ -157,10 +184,7 @@ export default function AppShell({ children }: { children: ReactNode }) {
                     : "We couldn't add this book"}
               </h2>
               <p className="import-meta">
-                {importPhase === "importing"
-                  ? importingFileName ||
-                    "This might take a moment while we index pages."
-                  : importResult?.message || "Please try again."}
+                {importMessage}
               </p>
               {importPhase !== "importing" ? (
                 <div className="import-actions">
