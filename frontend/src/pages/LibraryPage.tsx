@@ -74,7 +74,6 @@ export default function LibraryPage() {
     <section className="library-page">
       <div className="library-hero">
         <div className="library-hero-copy">
-          <p className="eyebrow">Your shelf</p>
           <h1>Browse, annotate, and export without leaving your library.</h1>
           <p className="subhead">
             A lightweight reading workspace that keeps your EPUB collection close and
@@ -101,7 +100,6 @@ export default function LibraryPage() {
 
       <div className="library-controls">
         <div className="library-controls-group">
-          <span className="controls-label">Filter</span>
           <div className="chips">
             {filters.map((filter) => (
               <button
@@ -116,7 +114,6 @@ export default function LibraryPage() {
           </div>
         </div>
         <div className="search">
-          <span className="controls-label">Search</span>
           <div className="search-field">
             <input
               type="search"
