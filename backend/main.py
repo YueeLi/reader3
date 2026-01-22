@@ -1,3 +1,4 @@
+import hashlib
 import os
 import pickle
 import shutil
@@ -75,6 +76,35 @@ def _find_cover_url(book_id: str) -> Optional[str]:
         if os.path.exists(potential_cover):
             return f"/books/{book_id}/images/{cover_name}"
 
+    return None
+
+
+def _hash_upload_to_temp(upload_file: UploadFile, tmp_handle) -> str:
+    hasher = hashlib.sha256()
+    for chunk in iter(lambda: upload_file.file.read(1024 * 1024), b""):
+        tmp_handle.write(chunk)
+        hasher.update(chunk)
+    return hasher.hexdigest()
+
+
+def _find_duplicate_by_hash(file_hash: str) -> Optional[str]:
+    if not os.path.exists(BOOKS_DIR):
+        return None
+
+    for item in os.listdir(BOOKS_DIR):
+        item_path = os.path.join(BOOKS_DIR, item)
+        if not (item.endswith("_data") and os.path.isdir(item_path)):
+            continue
+        hash_path = os.path.join(item_path, "source.sha256")
+        if not os.path.exists(hash_path):
+            continue
+        try:
+            with open(hash_path, "r", encoding="utf-8") as f:
+                stored_hash = f.read().strip()
+            if stored_hash == file_hash:
+                return item
+        except OSError:
+            continue
     return None
 
 
@@ -159,10 +189,23 @@ async def import_book(file: UploadFile = File(...)):
 
     temp_path = None
     output_dir = None
+    file_hash = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".epub") as tmp:
             temp_path = tmp.name
-            shutil.copyfileobj(file.file, tmp)
+            file_hash = _hash_upload_to_temp(file, tmp)
+
+        if file_hash:
+            duplicate_id = _find_duplicate_by_hash(file_hash)
+            if duplicate_id:
+                existing_book = load_book_cached(duplicate_id)
+                existing_title = (
+                    existing_book.metadata.title if existing_book else duplicate_id
+                )
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Book already imported: {existing_title}",
+                )
 
         base_name = _sanitize_book_name(file.filename)
         folder_name = _resolve_unique_folder(base_name)
@@ -170,6 +213,11 @@ async def import_book(file: UploadFile = File(...)):
 
         book_obj = reader3_module.process_epub(temp_path, output_dir)
         reader3_module.save_to_pickle(book_obj, output_dir)
+        if file_hash:
+            with open(
+                os.path.join(output_dir, "source.sha256"), "w", encoding="utf-8"
+            ) as f:
+                f.write(file_hash)
 
         load_book_cached.cache_clear()
 

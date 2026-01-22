@@ -68,7 +68,16 @@ export async function importEpub(file: File): Promise<BookListItem> {
     body: formData
   });
   if (!response.ok) {
-    throw new Error(`Import failed: ${response.status}`);
+    let detail = `Import failed: ${response.status}`;
+    try {
+      const payload = (await response.json()) as { detail?: string };
+      if (payload?.detail) {
+        detail = payload.detail;
+      }
+    } catch {
+      // Ignore JSON parsing errors and fall back to status message.
+    }
+    throw new Error(detail);
   }
   const book = (await response.json()) as BookListItem;
   return resolveBookListItem(book);
