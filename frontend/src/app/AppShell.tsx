@@ -1,5 +1,5 @@
 import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { importEpub } from "../api/books";
 import { LIBRARY_REFRESH_EVENT, LIBRARY_RESET_EVENT } from "./events";
 
@@ -16,6 +16,8 @@ export default function AppShell({ children }: { children: ReactNode }) {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const { pathname } = useLocation();
+  const showLibraryActions = pathname === "/";
   const navigate = useNavigate();
   const duplicateMarker = "Book already imported";
 
@@ -115,30 +117,34 @@ export default function AppShell({ children }: { children: ReactNode }) {
         <Link to="/" className="logo">
           Reader3
         </Link>
-        <div className="header-actions">
-          <button
-            className="ghost-button"
-            type="button"
-            onClick={handleImportClick}
-            disabled={importPhase !== "idle"}
-          >
-            {importPhase === "importing" ? "Importing..." : "Import EPUB"}
-          </button>
-          <button
-            className="accent-button"
-            type="button"
-            onClick={handleNewSession}
-          >
-            New Session
-          </button>
-        </div>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".epub"
-          onChange={handleFileChange}
-          style={{ display: "none" }}
-        />
+        {showLibraryActions ? (
+          <>
+            <div className="header-actions">
+              <button
+                className="ghost-button"
+                type="button"
+                onClick={handleImportClick}
+                disabled={importPhase !== "idle"}
+              >
+                {importPhase === "importing" ? "Importing..." : "Import EPUB"}
+              </button>
+              <button
+                className="accent-button"
+                type="button"
+                onClick={handleNewSession}
+              >
+                New Session
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".epub"
+              onChange={handleFileChange}
+              style={{ display: "none" }}
+            />
+          </>
+        ) : null}
       </header>
       {importPhase !== "idle" ? (
         <div

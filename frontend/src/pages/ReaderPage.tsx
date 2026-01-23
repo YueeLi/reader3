@@ -3,9 +3,7 @@ import { useParams } from "react-router-dom";
 import { fetchBookDetail, fetchChapter } from "../api/books";
 import type { BookDetail, ChapterContent } from "../types/book";
 import TocSidebar from "../components/TocSidebar";
-import ReaderToolbar from "../components/ReaderToolbar";
 import ChapterNav from "../components/ChapterNav";
-import { downloadExport } from "../api/exports";
 
 export default function ReaderPage() {
   const { bookId = "", chapterIndex = "0" } = useParams();
@@ -64,16 +62,6 @@ export default function ReaderPage() {
         activeIndex={activeIndex}
       />
       <div className="reader-main">
-        <ReaderToolbar
-          bookTitle={book.title}
-          chapterTitle={chapterTitle}
-          onExportMarkdown={() => {
-            void downloadExport(book.id, "markdown", "single");
-          }}
-          onExportPdf={() => {
-            void downloadExport(book.id, "pdf");
-          }}
-        />
         <article className="reader-content">
           <h2>{chapterTitle}</h2>
           <div
