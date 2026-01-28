@@ -19,3 +19,5 @@ certs/
 
 # Tests
 *.coverage
+
+.trae/

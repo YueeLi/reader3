@@ -74,25 +74,25 @@ export default function LibraryPage() {
     <section className="library-page">
       <div className="library-hero">
         <div className="library-hero-copy">
-          <h1>Browse, annotate, and export without leaving your library.</h1>
+          <h1>Libra keeps every book, chapter, and cover in view.</h1>
           <p className="subhead">
-            A lightweight reading workspace that keeps your EPUB collection close and
-            searchable.
+            A focused reading workspace that keeps your EPUB collection searchable,
+            tagged, and ready for export.
           </p>
         </div>
         <div className="library-hero-panel">
           <div className="library-stats">
             <div className="stat-card">
-              <span className="stat-label">Books</span>
+              <span className="stat-label">Shelf</span>
               <strong className="stat-value">{books.length}</strong>
             </div>
             <div className="stat-card">
               <span className="stat-label">Exports</span>
-              <strong className="stat-value">Ready</strong>
+              <strong className="stat-value">Queued</strong>
             </div>
             <div className="stat-card">
               <span className="stat-label">Sync</span>
-              <strong className="stat-value">Local</strong>
+              <strong className="stat-value">Offline</strong>
             </div>
           </div>
         </div>
