@@ -1,34 +1,9 @@
 import { useRef, useState, type ChangeEvent, type DragEvent } from "react";
-import { useNavigate } from "react-router-dom";
-import { importEpub } from "../api/books";
+import { Link } from "react-router-dom";
+import { fetchBookImages, importEpub } from "../api/books";
+import { downloadExport } from "../api/exports";
 import { LIBRARY_REFRESH_EVENT } from "../app/events";
-
-const toolCards = [
-  {
-    title: "EPUB to PDF",
-    description: "Generate a print-ready PDF with preserved typography.",
-    action: "Queue PDF",
-    status: "coming"
-  },
-  {
-    title: "EPUB to Markdown",
-    description: "Extract clean Markdown for notes, CMS, or doc pipelines.",
-    action: "Queue Markdown",
-    status: "coming"
-  },
-  {
-    title: "Extract Illustrations",
-    description: "Pull cover art, inline images, and chapter art assets.",
-    action: "Collect Assets",
-    status: "coming"
-  },
-  {
-    title: "Metadata Snapshot",
-    description: "Export title, author, and chapter list as structured JSON.",
-    action: "Generate Snapshot",
-    status: "coming"
-  }
-];
+import type { BookImageList, BookListItem } from "../types/book";
 
 export default function ToolsPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -43,9 +18,27 @@ export default function ToolsPage() {
     message: string;
     type: "success" | "error";
   } | null>(null);
+  const [currentBook, setCurrentBook] = useState<BookListItem | null>(null);
+  const [imageList, setImageList] = useState<BookImageList | null>(null);
+  const [imagePhase, setImagePhase] = useState<
+    "idle" | "loading" | "ready" | "error"
+  >("idle");
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [showImages, setShowImages] = useState(false);
+  const [exportPhase, setExportPhase] = useState<"idle" | "downloading">("idle");
+  const [exportError, setExportError] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
-  const navigate = useNavigate();
   const duplicateMarker = "Book already imported";
+
+  const resetPanels = () => {
+    setCurrentBook(null);
+    setImageList(null);
+    setImagePhase("idle");
+    setImageError(null);
+    setShowImages(false);
+    setExportPhase("idle");
+    setExportError(null);
+  };
 
   const handleImportClick = () => {
     if (importPhase !== "idle") {
@@ -60,6 +53,7 @@ export default function ToolsPage() {
     const minOverlayMs = 3000;
     setImportPhase("importing");
     setImportResult(null);
+    resetPanels();
     try {
       const book = await importEpub(file);
       const elapsed = Date.now() - startedAt;
@@ -71,10 +65,10 @@ export default function ToolsPage() {
       setImportResult({
         type: "success",
         title: "Import complete",
-        message: `"${book.title}" is ready in your library.`
+        message: `"${book.title}" is ready for exports below.`
       });
+      setCurrentBook(book);
       window.dispatchEvent(new Event(LIBRARY_REFRESH_EVENT));
-      navigate("/libra");
     } catch (error) {
       console.error(error);
       const message =
@@ -133,6 +127,66 @@ export default function ToolsPage() {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    if (!currentBook || exportPhase !== "idle") {
+      return;
+    }
+    setExportPhase("downloading");
+    setExportError(null);
+    try {
+      await downloadExport(currentBook.id, "pdf");
+    } catch (error) {
+      setExportError(
+        error instanceof Error ? error.message : "PDF export failed."
+      );
+    } finally {
+      setExportPhase("idle");
+    }
+  };
+
+  const handleDownloadMarkdown = async (mode: "single" | "chapters") => {
+    if (!currentBook || exportPhase !== "idle") {
+      return;
+    }
+    setExportPhase("downloading");
+    setExportError(null);
+    try {
+      await downloadExport(currentBook.id, "markdown", mode);
+    } catch (error) {
+      setExportError(
+        error instanceof Error ? error.message : "Markdown export failed."
+      );
+    } finally {
+      setExportPhase("idle");
+    }
+  };
+
+  const loadImages = async () => {
+    if (!currentBook || imagePhase === "loading") {
+      return;
+    }
+    setImagePhase("loading");
+    setImageError(null);
+    try {
+      const payload = await fetchBookImages(currentBook.id);
+      setImageList(payload);
+      setImagePhase("ready");
+    } catch (error) {
+      setImagePhase("error");
+      setImageError(
+        error instanceof Error ? error.message : "Failed to load images."
+      );
+    }
+  };
+
+  const handleImagesToggle = async () => {
+    const next = !showImages;
+    setShowImages(next);
+    if (next && imagePhase !== "ready") {
+      await loadImages();
+    }
+  };
+
   const importMessage = (() => {
     if (importPhase === "importing") {
       return (
@@ -159,42 +213,22 @@ export default function ToolsPage() {
     return message;
   })();
 
+  const imagesToShow =
+    showImages && imageList ? imageList.images.slice(0, 8) : [];
+  const showMoreTile =
+    showImages && imageList ? imageList.images.length > 8 : false;
+  const showEmptyTile =
+    showImages && imageList ? imageList.images.length === 0 : false;
+  const placeholderCount =
+    showImages && imageList
+      ? Math.max(
+          0,
+          9 - imagesToShow.length - (showMoreTile ? 1 : 0) - (showEmptyTile ? 1 : 0),
+        )
+      : 9;
+
   return (
     <section className="tools-page">
-      <div className="tools-hero">
-        <div className="tools-hero-copy">
-          <p className="eyebrow">Tools</p>
-          <h1>Everything you need to process new books.</h1>
-          <p className="subhead">
-            Import an EPUB once, then route it through conversion, illustration
-            capture, and metadata workflows.
-          </p>
-          <div className="tools-hero-actions">
-            <button
-              className="accent-button"
-              type="button"
-              onClick={handleImportClick}
-              disabled={importPhase !== "idle"}
-            >
-              {importPhase === "importing" ? "Processing..." : "Import EPUB"}
-            </button>
-            <span className="tools-hero-meta">EPUB only. Up to 500 MB.</span>
-          </div>
-        </div>
-        <div className="tools-hero-status">
-          <div className="status-card">
-            <span className="status-label">Queue</span>
-            <strong className="status-value">Ready</strong>
-            <p>Processing happens locally with API support.</p>
-          </div>
-          <div className="status-card">
-            <span className="status-label">Outputs</span>
-            <strong className="status-value">4 pipelines</strong>
-            <p>PDF, Markdown, Assets, Metadata.</p>
-          </div>
-        </div>
-      </div>
-
       <div
         className={isDragActive ? "tools-dropzone dragging" : "tools-dropzone"}
         onDragOver={handleDragOver}
@@ -210,10 +244,23 @@ export default function ToolsPage() {
         }}
       >
         <div className="dropzone-content">
-          <p className="dropzone-title">Drop your EPUB here</p>
+          <p className="dropzone-title">Import an EPUB</p>
           <p className="dropzone-subhead">
-            We will catalog chapters, cover, and metadata automatically.
+            Drop the file here or click to browse. We will index chapters and
+            cover art automatically.
           </p>
+          <button
+            className="accent-button"
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              handleImportClick();
+            }}
+            disabled={importPhase !== "idle"}
+          >
+            {importPhase === "importing" ? "Processing..." : "Choose file"}
+          </button>
+          <span className="dropzone-meta">EPUB only. Up to 500 MB.</span>
         </div>
         <div className="dropzone-badges">
           <span>Cover Art</span>
@@ -229,58 +276,136 @@ export default function ToolsPage() {
         />
       </div>
 
-      <div className="tools-grid">
-        {toolCards.map((tool) => (
-          <article className="tool-card" key={tool.title}>
+      <div className="tools-workspace">
+        <article className="workbook-card">
+          <div className="workbook-header">
             <div>
-              <h3>{tool.title}</h3>
-              <p>{tool.description}</p>
+              <p className="eyebrow">Current EPUB</p>
+              <h2>{currentBook ? currentBook.title : "No import yet"}</h2>
             </div>
-            <div className="tool-card-footer">
-              <button
-                className="ghost-button disabled"
-                type="button"
-                disabled
+            <span className="workbook-status">
+              {currentBook ? "Ready" : "Idle"}
+            </span>
+          </div>
+          <div className="workbook-body">
+            {currentBook?.coverUrl ? (
+              <img
+                className="workbook-cover"
+                src={currentBook.coverUrl}
+                alt={`${currentBook.title} cover`}
+              />
+            ) : (
+              <div className="workbook-cover placeholder" aria-hidden="true" />
+            )}
+          <div className="workbook-meta">
+              <div>
+                <span className="meta-label">Title</span>
+                <p>{currentBook?.title || "Import an EPUB to begin."}</p>
+              </div>
+              <div>
+                <span className="meta-label">Author</span>
+                <p>{currentBook?.author || "—"}</p>
+              </div>
+              <div>
+                <span className="meta-label">Chapters</span>
+                <p>{currentBook ? currentBook.chapters : "—"}</p>
+              </div>
+            </div>
+          </div>
+          <div className="workbook-actions">
+            {currentBook ? (
+              <Link
+                className="accent-button"
+                to={`/read/${currentBook.id}/0`}
               >
-                {tool.action}
+                Preview
+              </Link>
+            ) : (
+              <span className="accent-button disabled" aria-disabled="true">
+                Preview
+              </span>
+            )}
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={!currentBook || exportPhase === "downloading"}
+            >
+              PDF
+            </button>
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={() => handleDownloadMarkdown("single")}
+              disabled={!currentBook || exportPhase === "downloading"}
+            >
+              Markdown
+            </button>
+            <button
+              className="ghost-button"
+              type="button"
+              onClick={() => handleDownloadMarkdown("chapters")}
+              disabled={!currentBook || exportPhase === "downloading"}
+            >
+              Zip
+            </button>
+          </div>
+          {exportError ? (
+            <p className="workbook-error">{exportError}</p>
+          ) : null}
+        </article>
+
+        <div className="workbook-side">
+          <article className="tool-panel">
+            <div className="panel-header">
+              <div>
+                <p className="eyebrow">Illustrations</p>
+                <h3>Visual assets</h3>
+              </div>
+              <button
+                type="button"
+                className="ghost-button"
+                disabled={!currentBook}
+                onClick={handleImagesToggle}
+              >
+                {showImages ? "Hide" : "View"} images
               </button>
-              <span className="tool-status">Coming soon</span>
+            </div>
+            <p className="panel-subhead">
+              Browse extracted images stored with the EPUB.
+            </p>
+            {imagePhase === "loading" ? (
+              <p className="panel-meta">Loading images…</p>
+            ) : null}
+            {imageError ? <p className="panel-error">{imageError}</p> : null}
+            <div className="image-grid">
+              {showImages && imageList ? (
+                <>
+                  {showEmptyTile ? (
+                    <div className="image-tile more">No images</div>
+                  ) : null}
+                  {imagesToShow.map((image) => (
+                    <div className="image-tile" key={image.url}>
+                      <img src={image.url} alt={image.name} />
+                    </div>
+                  ))}
+                  {showMoreTile ? (
+                    <div className="image-tile more">More</div>
+                  ) : null}
+                  {Array.from({ length: placeholderCount }).map((_, index) => (
+                    <div
+                      className="image-tile placeholder"
+                      key={`placeholder-${index}`}
+                    />
+                  ))}
+                </>
+              ) : (
+                Array.from({ length: placeholderCount }).map((_, index) => (
+                  <div className="image-tile placeholder" key={index} />
+                ))
+              )}
             </div>
           </article>
-        ))}
-      </div>
-
-      <div className="tools-pipeline">
-        <div>
-          <p className="eyebrow">Workflow</p>
-          <h2>Suggested processing order</h2>
-          <p className="subhead">
-            Keep conversions consistent by following a predictable, repeatable
-            pipeline.
-          </p>
-        </div>
-        <div className="pipeline-steps">
-          <div className="pipeline-step">
-            <span className="step-index">01</span>
-            <div>
-              <h3>Import and validate</h3>
-              <p>Check chapters, cover art, and metadata integrity.</p>
-            </div>
-          </div>
-          <div className="pipeline-step">
-            <span className="step-index">02</span>
-            <div>
-              <h3>Generate deliverables</h3>
-              <p>Create PDFs and Markdown for review or publishing.</p>
-            </div>
-          </div>
-          <div className="pipeline-step">
-            <span className="step-index">03</span>
-            <div>
-              <h3>Collect assets</h3>
-              <p>Export illustrations and metadata snapshots.</p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -324,7 +449,7 @@ export default function ToolsPage() {
                 {importPhase === "importing"
                   ? "Cataloging your new read"
                   : importPhase === "success"
-                    ? "Ready on your shelf"
+                    ? "Ready to process"
                     : "We couldn't add this book"}
               </h2>
               <p className="import-meta">{importMessage}</p>

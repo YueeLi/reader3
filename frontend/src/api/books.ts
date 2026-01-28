@@ -1,4 +1,9 @@
-import type { BookDetail, BookListItem, ChapterContent } from "../types/book";
+import type {
+  BookDetail,
+  BookImageList,
+  BookListItem,
+  ChapterContent
+} from "../types/book";
 import { apiGet, resolveAssetUrl, resolveApiUrl } from "./client";
 import { mockBookDetail, mockBooks, mockChapter } from "./mock";
 
@@ -81,4 +86,19 @@ export async function importEpub(file: File): Promise<BookListItem> {
   }
   const book = (await response.json()) as BookListItem;
   return resolveBookListItem(book);
+}
+
+export async function fetchBookImages(bookId: string): Promise<BookImageList> {
+  if (useMock) {
+    return { bookId, count: 0, images: [] };
+  }
+  const payload = await apiGet<BookImageList>(`/api/books/${bookId}/images`);
+  return {
+    ...payload,
+    coverUrl: resolveAssetUrl(payload.coverUrl),
+    images: payload.images.map((image) => ({
+      ...image,
+      url: resolveAssetUrl(image.url)
+    }))
+  };
 }

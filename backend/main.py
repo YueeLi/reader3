@@ -332,6 +332,40 @@ async def get_book_chapter(book_id: str, chapter_index: int):
     }
 
 
+@app.get("/api/books/{book_id}/images")
+async def list_book_images(book_id: str):
+    book = load_book_cached(book_id)
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+
+    images_dir = os.path.join(BOOKS_DIR, book_id, "images")
+    if not os.path.exists(images_dir):
+        return {
+            "bookId": book_id,
+            "count": 0,
+            "coverUrl": _find_cover_url(book_id),
+            "images": [],
+        }
+
+    allowed_exts = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".svg"}
+    images = []
+    for name in sorted(os.listdir(images_dir)):
+        file_path = os.path.join(images_dir, name)
+        if not os.path.isfile(file_path):
+            continue
+        ext = os.path.splitext(name)[1].lower()
+        if ext not in allowed_exts:
+            continue
+        images.append({"name": name, "url": f"/books/{book_id}/images/{name}"})
+
+    return {
+        "bookId": book_id,
+        "count": len(images),
+        "coverUrl": _find_cover_url(book_id),
+        "images": images,
+    }
+
+
 @app.get("/export/{book_id}/markdown")
 async def export_markdown(
     book_id: str,

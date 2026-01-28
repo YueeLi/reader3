@@ -28,3 +28,15 @@ export type BookDetail = {
   toc: TocEntry[];
   coverUrl?: string;
 };
+
+export type BookImage = {
+  name: string;
+  url: string;
+};
+
+export type BookImageList = {
+  bookId: string;
+  count: number;
+  images: BookImage[];
+  coverUrl?: string;
+};

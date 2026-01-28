@@ -586,61 +586,6 @@ a {
   padding-top: 0.5rem;
 }
 
-.tools-hero {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  gap: 2rem;
-  align-items: center;
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0.92), rgba(238, 228, 214, 0.9));
-  border-radius: var(--radius-lg);
-  padding: clamp(2rem, 4vw, 3rem);
-  box-shadow: var(--shadow-strong);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-}
-
-.tools-hero-copy {
-  display: grid;
-  gap: 0.9rem;
-}
-
-.tools-hero-actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.8rem;
-}
-
-.tools-hero-meta {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.tools-hero-status {
-  display: grid;
-  gap: 1rem;
-}
-
-.status-card {
-  background: rgba(255, 255, 255, 0.82);
-  border-radius: 18px;
-  padding: 1.2rem;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: var(--shadow-soft);
-  display: grid;
-  gap: 0.4rem;
-}
-
-.status-label {
-  font-size: 0.7rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-
-.status-value {
-  font-size: 1.2rem;
-  color: var(--ink);
-}
 
 .tools-dropzone {
   border-radius: 26px;
@@ -654,6 +599,12 @@ a {
   justify-items: center;
   transition: all 0.2s ease;
   cursor: pointer;
+}
+
+.dropzone-content {
+  display: grid;
+  gap: 0.6rem;
+  justify-items: center;
 }
 
 .tools-dropzone.dragging {
@@ -673,6 +624,11 @@ a {
   color: var(--text-muted);
 }
 
+.dropzone-meta {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
 .dropzone-badges {
   display: flex;
   flex-wrap: wrap;
@@ -689,82 +645,180 @@ a {
   border: 1px solid rgba(24, 35, 59, 0.15);
 }
 
-.tools-grid {
+.tools-workspace {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.2rem;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 1.6rem;
+  align-items: stretch;
 }
 
-.tool-card {
-  background: rgba(255, 255, 255, 0.88);
+.workbook-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 28px;
+  padding: clamp(1.6rem, 3vw, 2.4rem);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: var(--shadow-strong);
+  display: grid;
+  gap: 1.6rem;
+}
+
+.workbook-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.workbook-status {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  color: var(--text-muted);
+}
+
+.workbook-body {
+  display: grid;
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 1.4rem;
+  align-items: start;
+}
+
+.workbook-cover {
+  width: 100%;
+  border-radius: 18px;
+  box-shadow: var(--shadow-soft);
+  object-fit: cover;
+  aspect-ratio: 3 / 4;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.workbook-cover.placeholder {
+  background: linear-gradient(135deg, rgba(214, 203, 191, 0.6), rgba(255, 255, 255, 0.8));
+  border: 1px dashed rgba(24, 35, 59, 0.2);
+}
+
+.workbook-meta {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.meta-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--text-muted);
+  margin-bottom: 0.2rem;
+  display: inline-block;
+}
+
+.workbook-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.workbook-actions .ghost-button,
+.workbook-actions .accent-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.workbook-error,
+.panel-error {
+  color: #b6432b;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.workbook-side {
+  display: grid;
+  gap: 1.2rem;
+  height: 100%;
+}
+
+.tool-panel {
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 22px;
   padding: 1.4rem;
   border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow: var(--shadow-soft);
   display: grid;
-  gap: 1.2rem;
-  min-height: 220px;
+  gap: 0.8rem;
+  height: 100%;
+  align-content: start;
 }
 
-.tool-card h3 {
-  margin: 0 0 0.4rem 0;
-}
-
-.tool-card p {
-  margin: 0;
-  color: var(--text-muted);
-}
-
-.tool-card-footer {
+.panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.8rem;
-  margin-top: auto;
-}
-
-.tool-status {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--text-muted);
-}
-
-.tools-pipeline {
-  background: var(--surface-glass);
-  border-radius: var(--radius-lg);
-  padding: clamp(1.8rem, 3vw, 2.6rem);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  box-shadow: var(--shadow);
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1.6rem;
-  align-items: start;
-}
-
-.pipeline-steps {
-  display: grid;
   gap: 1rem;
 }
 
-.pipeline-step {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 0.8rem;
-  align-items: start;
-  background: rgba(255, 255, 255, 0.85);
-  border-radius: 18px;
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.7);
-}
-
-.pipeline-step h3 {
-  margin: 0 0 0.3rem 0;
-}
-
-.pipeline-step p {
+.panel-subhead {
   margin: 0;
   color: var(--text-muted);
+}
+
+.panel-meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.image-tile {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+  border: 1px solid rgba(24, 35, 59, 0.12);
+  padding: 0.6rem;
+  display: grid;
+  gap: 0.4rem;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  aspect-ratio: 1 / 1;
+}
+
+.image-tile.placeholder {
+  background: rgba(255, 255, 255, 0.4);
+  border-style: dashed;
+}
+
+.image-tile.more {
+  background: rgba(24, 35, 59, 0.06);
+  border-style: dashed;
+  font-weight: 600;
+  color: var(--ink);
+  align-items: center;
+  justify-content: center;
+}
+
+.image-tile img {
+  width: 100%;
+  border-radius: 12px;
+  object-fit: cover;
+  aspect-ratio: 1 / 1;
+}
+
+@media (max-width: 960px) {
+  .tools-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .workbook-body {
+    grid-template-columns: 1fr;
+  }
+
+  .image-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .library-page {
@@ -1238,8 +1292,7 @@ a {
     flex-wrap: wrap;
   }
 
-  .home-hero,
-  .tools-hero {
+  .home-hero {
     padding: 2rem;
   }
 
