@@ -21,6 +21,7 @@ from backend.app.services.export_service import export_book, BookNotFoundError, 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 BOOKS_DIR = os.path.join(BASE_DIR, "books")
+EPUBS_DIR = os.path.join(BASE_DIR, "epubs")
 
 app = FastAPI()
 app.add_middleware(
@@ -36,6 +37,7 @@ app.add_middleware(
 
 # Ensure books directory exists before mounting static files.
 os.makedirs(BOOKS_DIR, exist_ok=True)
+os.makedirs(EPUBS_DIR, exist_ok=True)
 
 # Mount books directory as static files for serving cover images
 app.mount("/books", StaticFiles(directory=BOOKS_DIR), name="books")
@@ -153,6 +155,7 @@ def _flatten_toc(entries, spine_index, depth=0):
     return flattened
 
 
+
 @app.get("/api/books")
 async def list_books():
     """Lists all available processed books."""
@@ -190,10 +193,48 @@ async def import_book(file: UploadFile = File(...)):
     temp_path = None
     output_dir = None
     file_hash = None
+    epub_path = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".epub") as tmp:
             temp_path = tmp.name
             file_hash = _hash_upload_to_temp(file, tmp)
+
+        epub_filename = os.path.basename(file.filename)
+        epub_path = os.path.join(EPUBS_DIR, epub_filename)
+
+        if os.path.exists(epub_path):
+            duplicate_id = _find_duplicate_by_hash(file_hash) if file_hash else None
+            if duplicate_id:
+                existing_book = load_book_cached(duplicate_id)
+                if existing_book:
+                    return {
+                        "id": duplicate_id,
+                        "title": existing_book.metadata.title,
+                        "author": ", ".join(existing_book.metadata.authors),
+                        "chapters": len(existing_book.spine),
+                        "coverUrl": _find_cover_url(duplicate_id),
+                    }
+
+            base_name = _sanitize_book_name(file.filename)
+            fallback_id = f"{base_name}_data"
+            fallback_book = load_book_cached(fallback_id)
+            if fallback_book:
+                return {
+                    "id": fallback_id,
+                    "title": fallback_book.metadata.title,
+                    "author": ", ".join(fallback_book.metadata.authors),
+                    "chapters": len(fallback_book.spine),
+                    "coverUrl": _find_cover_url(fallback_id),
+                }
+
+            fallback_title = os.path.splitext(epub_filename)[0] or "Untitled"
+            return {
+                "id": fallback_id,
+                "title": fallback_title,
+                "author": "",
+                "chapters": 0,
+                "coverUrl": None,
+            }
 
         if file_hash:
             duplicate_id = _find_duplicate_by_hash(file_hash)
@@ -210,6 +251,8 @@ async def import_book(file: UploadFile = File(...)):
         base_name = _sanitize_book_name(file.filename)
         folder_name = _resolve_unique_folder(base_name)
         output_dir = os.path.join(BOOKS_DIR, folder_name)
+
+        shutil.copy2(temp_path, epub_path)
 
         book_obj = reader3_module.process_epub(temp_path, output_dir)
         reader3_module.save_to_pickle(book_obj, output_dir)
@@ -233,6 +276,8 @@ async def import_book(file: UploadFile = File(...)):
     except Exception as exc:
         if output_dir and os.path.exists(output_dir):
             shutil.rmtree(output_dir, ignore_errors=True)
+        if epub_path and os.path.exists(epub_path):
+            os.remove(epub_path)
         raise HTTPException(status_code=500, detail=f"Import failed: {exc}")
     finally:
         if temp_path and os.path.exists(temp_path):
