@@ -341,6 +341,8 @@ def export_pdf(book: Book, book_id: str) -> str:
     os.makedirs(output_dir, exist_ok=True)
     
     output_file = os.path.join(output_dir, f"{sanitize_filename(book.metadata.title)}.pdf")
+    if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
+        return output_file
     
     # 6. Render PDF
     html_doc = HTML(string=complete_html)
